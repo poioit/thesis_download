@@ -81,13 +81,14 @@ try:
     #dois = downloader.get_dois_from_journal_issn('1476-4686', rows=500, pub_after=2000)
     filetype = 'xml'
     #78 is for elsevier
-    records = downloader.get_dict_from_search('ascorbic acid+extraction+fruit&filter=member:78',200)
+    records = downloader.get_dict_from_search('ascorbic acid+extraction+fruit&filter=member:78',3000)
     for i, record in enumerate(records):
         print(i)
         cur_title = re.sub('[\[\]\'\.\/]', '', str(record['title']))
-        replaced = re.sub('[\[\]\'\.\/]', '', str(record['doi']))
-        print(replaced)
-        cur_filename = './elsevier/'+replaced+'.'+filetype
+        replaced_doi = re.sub('[\[\]\'\.\/()]', '', str(record['doi']))
+        
+        print(replaced_doi)
+        cur_filename = './elsevier/'+replaced_doi+'.'+filetype
         try:
             my_file = open(cur_filename, 'wb')  # Need to use 'wb' on Windows
         except Exception as e:
@@ -97,6 +98,9 @@ try:
         #downloader.get_html_from_doi(doi, my_html_file, 'elsevier')
         
         my_file.close()
+        response = restclient.thesis.list(body=None, params={'doi':replaced_doi}, headers={})
+        if response.status_code == 200 and response.body['total'] >= 1:
+            continue
         if ret != True:
             continue
         if filetype == 'xml':
@@ -104,17 +108,19 @@ try:
             print(rawtext)
             if rawtext == '':
                 rawtext = 'empty'
-            body = {'doi':record['doi'], 'text':rawtext,  'url':str(record['url']), 'title':cur_title}
+            body = {'doi':replaced_doi, 'text':rawtext,  'url':str(record['url']), 'title':cur_title}
             
             response = restclient.thesis.list(body=None, params={'doi':record['doi']}, headers={})
             if response.status_code == 200 and response.body['total'] >= 1:
                 continue
+            '''
             try:
                 response = restclient.thesis.create(body=body, params={}, headers={})
             except Exception as e:
                 print(str(e))
             if response.status_code == 201:
                 print( 'insert ok')
+            '''
                 
             pass
         elif filetype == 'pdf':
