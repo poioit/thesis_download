@@ -102,14 +102,17 @@ try:
         if filetype == 'xml':
             rawtext = findText(cur_filename)
             print(rawtext)
-            if rawtext == None:
-                rawtext = ''
+            if rawtext == '':
+                rawtext = 'empty'
             body = {'doi':record['doi'], 'text':rawtext,  'url':str(record['url']), 'title':cur_title}
             
             response = restclient.thesis.list(body=None, params={'doi':record['doi']}, headers={})
             if response.status_code == 200 and response.body['total'] >= 1:
                 continue
-            response = restclient.thesis.create(body=body, params={}, headers={})
+            try:
+                response = restclient.thesis.create(body=body, params={}, headers={})
+            except Exception as e:
+                print(str(e))
             if response.status_code == 201:
                 print( 'insert ok')
                 
