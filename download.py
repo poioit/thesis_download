@@ -102,6 +102,8 @@ try:
         if filetype == 'xml':
             rawtext = findText(cur_filename)
             print(rawtext)
+            if rawtext == None:
+                rawtext = ''
             body = {'doi':record['doi'], 'text':rawtext,  'url':str(record['url']), 'title':cur_title}
             
             response = restclient.thesis.list(body=None, params={'doi':record['doi']}, headers={})
