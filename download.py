@@ -27,14 +27,51 @@ def parsexml(myfile):
 def findNode(root, spaces, target):
     for child in root:
         print(child)
+        if child.tag.find('article') != -1:
+            print(child)
         ret = child.findall( target, spaces)
         if ret:
             return ret
         else:
             findNode(child, spaces, target)
 
+def findText(cur_filename):
+    tree = ET.parse(cur_filename)
+    root = tree.getroot()
+    my_namespaces = dict([
+        node for _, node in ET.iterparse(
+            cur_filename, events=['start-ns']
+            )
+            ])
+    from pprint import pprint
+    pprint(my_namespaces)
+    rawtext = ''
+    
+    for child in root:
+        for neighbor in root.iter(child.tag):
+            if neighbor.tag.find('originalText') != -1 :
+                rawtexts = findNode(neighbor, my_namespaces, 'xocs:rawtext')
+                if rawtexts != None:
+                    return rawtexts[0].text
+                else:
+                    for child in root.iter():
+                        print(child.tag)
+                        ret = child.find( 'ja:body', my_namespaces)
+                        if ret != None:
+                            for c in ret.findall('.//ce:sections/ce:section', my_namespaces):
+                                for sec in c.iter():
+                                    if sec.tag.find('section-title') != -1:
+                                        print(sec.text)
+                                        rawtext += sec.text+'\n'
+                                    if sec.tag.find('para') != -1:
+                                        print(sec.text)
+                                        rawtext += sec.text+'\n'
+                    print(rawtext)
+                    return rawtext
+
+
 restclient.add_resource(resource_name='thesis')
-#parsexml('./elsevier/The Adrenal Ascorbic Acid Content of Molting Hens and the Effect of ACTH on the Adrenal Ascorbic Acid Content of Laying Hens103382ps0380996.xml')
+#text = findText('./elsevier/A quick method for the simultaneous determination of ascorbic acid and sorbic acid in fruit juices by capillary zone el.xml')
 #sys.exit(0)
 try:
     downloader = ArticleDownloader(els_api_key='e88e30b8118b3ed42ca752c0d6b59686')
@@ -46,10 +83,13 @@ try:
     for i, record in enumerate(records):
         print(i)
         cur_title = re.sub('[\[\]\'\.\/]', '', str(record['title']))
-        replaced = re.sub('[\[\]\'\.\/]', '', cur_title+str(record['doi']))
+        replaced = re.sub('[\[\]\'\.\/]', '', str(record['doi']))
         print(replaced)
         cur_filename = './elsevier/'+replaced+'.'+filetype
-        my_file = open(cur_filename, 'wb')  # Need to use 'wb' on Windows
+        try:
+            my_file = open(cur_filename, 'wb')  # Need to use 'wb' on Windows
+        except Exception as e:
+            print(str(e))
         #my_html_file = open('./crossref/'+str(i)+'.html', 'wb')
         ret = downloader.get_xml_from_doi(record['doi'], my_file, 'elsevier')
         #downloader.get_html_from_doi(doi, my_html_file, 'elsevier')
@@ -58,28 +98,16 @@ try:
         if ret != True:
             continue
         if filetype == 'xml':
-            tree = ET.parse(cur_filename)
-            root = tree.getroot()
-            my_namespaces = dict([
-                node for _, node in ET.iterparse(
-                    cur_filename, events=['start-ns']
-                    )
-                    ])
-            import pprint
-            for child in root:
-                for neighbor in root.iter(child.tag):
-                    if neighbor.tag.find('originalText') != -1 :
-                        rawtexts = findNode(neighbor, my_namespaces, 'xocs:rawtext')
-                        for rawtext in rawtexts:
-                            print(rawtext.text)
-                            body = {'doi':record['doi'], 'text':rawtext.text,  'url':str(record['url']), 'title':cur_title}
-                            pprint.pprint(restclient.thesis.actions)
-                            response = restclient.thesis.list(body=None, params={'doi':record['doi']}, headers={})
-                            if response.status_code == 200 and response.body['total'] >= 1:
-                                continue
-                            response = restclient.thesis.create(body=body, params={}, headers={})
-                            if response.status_code == 201:
-                                print( 'insert ok')
+            rawtext = findText(cur_filename)
+            print(rawtext)
+            body = {'doi':record['doi'], 'text':rawtext,  'url':str(record['url']), 'title':cur_title}
+            
+            response = restclient.thesis.list(body=None, params={'doi':record['doi']}, headers={})
+            if response.status_code == 200 and response.body['total'] >= 1:
+                continue
+            response = restclient.thesis.create(body=body, params={}, headers={})
+            if response.status_code == 201:
+                print( 'insert ok')
                 
             pass
         elif filetype == 'pdf':
