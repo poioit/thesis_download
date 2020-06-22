@@ -26,9 +26,11 @@ def parsexml(myfile):
 
 def findNode(root, spaces, target):
     for child in root:
+        '''
         print(child)
         if child.tag.find('article') != -1:
             print(child)
+        '''
         ret = child.findall( target, spaces)
         if ret:
             return ret
