@@ -44,7 +44,7 @@ def findText(cur_filename):
             )
             ])
     from pprint import pprint
-    pprint(my_namespaces)
+    #pprint(my_namespaces)
     rawtext = ''
     
     for child in root:
@@ -55,18 +55,18 @@ def findText(cur_filename):
                     return rawtexts[0].text
                 else:
                     for child in root.iter():
-                        print(child.tag)
+                        #print(child.tag)
                         ret = child.find( 'ja:body', my_namespaces)
                         if ret != None:
                             for c in ret.findall('.//ce:sections/ce:section', my_namespaces):
                                 for sec in c.iter():
                                     if sec.tag.find('section-title') != -1:
-                                        print(sec.text)
+                                        #print(sec.text)
                                         rawtext += sec.text+'\n'
                                     if sec.tag.find('para') != -1:
-                                        print(sec.text)
+                                        #print(sec.text)
                                         rawtext += sec.text+'\n'
-                    print(rawtext)
+                    #print(rawtext)
                     return rawtext
 
 
