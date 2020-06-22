@@ -109,7 +109,10 @@ try:
             response = restclient.thesis.list(body=None, params={'doi':record['doi']}, headers={})
             if response.status_code == 200 and response.body['total'] >= 1:
                 continue
-            response = restclient.thesis.create(body=body, params={}, headers={})
+            try:
+                response = restclient.thesis.create(body=body, params={}, headers={})
+            except Exception as e:
+                print(str(e))
             if response.status_code == 201:
                 print( 'insert ok')
                 
