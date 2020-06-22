@@ -98,9 +98,7 @@ try:
         #downloader.get_html_from_doi(doi, my_html_file, 'elsevier')
         
         my_file.close()
-        response = restclient.thesis.list(body=None, params={'doi':replaced_doi}, headers={})
-        if response.status_code == 200 and response.body['total'] >= 1:
-            continue
+
         if ret != True:
             continue
         if filetype == 'xml':
@@ -113,14 +111,14 @@ try:
             response = restclient.thesis.list(body=None, params={'doi':record['doi']}, headers={})
             if response.status_code == 200 and response.body['total'] >= 1:
                 continue
-            '''
+            
             try:
                 response = restclient.thesis.create(body=body, params={}, headers={})
             except Exception as e:
                 print(str(e))
             if response.status_code == 201:
                 print( 'insert ok')
-            '''
+            
                 
             pass
         elif filetype == 'pdf':
